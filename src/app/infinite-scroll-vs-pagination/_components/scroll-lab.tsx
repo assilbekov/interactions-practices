@@ -147,19 +147,45 @@ function NaiveInfiniteDemo() {
   );
 }
 
-/** Virtualized: only the visible window exists in the DOM. */
+/**
+ * Virtualized + batched: only the visible window exists in the DOM, and only
+ * fetched batches exist in memory. Scrolling within PREFETCH_ROWS of the end
+ * of loaded data triggers the next fetch — ideally before the user hits it.
+ */
+const PREFETCH_ROWS = 8;
+const INITIAL_BATCH = 40;
+
 function VirtualizedDemo() {
   const [scrollTop, setScrollTop] = useState(0);
+  const [loaded, setLoaded] = useState(INITIAL_BATCH);
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const overscan = 3;
   const start = Math.max(0, Math.floor(scrollTop / ROW_H) - overscan);
   const visibleCount = Math.ceil(VIEWPORT_H / ROW_H) + overscan * 2;
-  const end = Math.min(TOTAL, start + visibleCount);
+  const end = Math.min(loaded, start + visibleCount);
   const rows = useMemo(
     () => Array.from({ length: end - start }, (_, i) => row(start + i)),
     [start, end],
   );
+
+  const onScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const top = event.currentTarget.scrollTop;
+    setScrollTop(top);
+    // Prefetch when the viewport enters the last PREFETCH_ROWS of loaded data.
+    if (
+      !loading &&
+      loaded < TOTAL &&
+      top + VIEWPORT_H > (loaded - PREFETCH_ROWS) * ROW_H
+    ) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoaded((n) => Math.min(TOTAL, n + BATCH));
+        setLoading(false);
+      }, 500);
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -167,9 +193,14 @@ function VirtualizedDemo() {
         ref={containerRef}
         className="overflow-y-auto rounded-md border"
         style={{ height: VIEWPORT_H }}
-        onScroll={(event) => setScrollTop(event.currentTarget.scrollTop)}
+        onScroll={onScroll}
       >
-        <div style={{ height: TOTAL * ROW_H, position: "relative" }}>
+        <div
+          style={{
+            height: loaded * ROW_H + (loading ? ROW_H : 0),
+            position: "relative",
+          }}
+        >
           <div
             style={{
               position: "absolute",
@@ -182,9 +213,24 @@ function VirtualizedDemo() {
               <RowView key={data.id} data={data} />
             ))}
           </div>
+          {loading && (
+            <div
+              className="absolute right-0 left-0 flex items-center justify-center gap-2 text-xs text-muted-foreground"
+              style={{ top: loaded * ROW_H, height: ROW_H }}
+            >
+              <Loader2Icon className="size-3.5 animate-spin" /> Fetching next{" "}
+              {BATCH}…
+            </div>
+          )}
         </div>
       </div>
-      <DomCounter count={rows.length} />
+      <div className="flex items-center justify-between">
+        <DomCounter count={rows.length} />
+        <p className="font-mono text-xs tabular-nums text-muted-foreground">
+          fetched <NumberFlow value={loaded} /> /{" "}
+          {TOTAL.toLocaleString("en-US")}
+        </p>
+      </div>
     </div>
   );
 }
@@ -206,9 +252,9 @@ const DEMOS = [
   },
   {
     key: "virtual",
-    title: "Infinite scroll, virtualized",
+    title: "Virtualized + batched fetching",
     good: true,
-    note: "Fling the scrollbar anywhere in 10,000 rows — the DOM never holds more than the window you can see, plus a little overscan.",
+    note: "Starts with just 40 fetched rows. Scroll within ~8 rows of the end and the next 30 are already being fetched — while the DOM never holds more than the visible window. Both counters stay honest.",
     Demo: VirtualizedDemo,
   },
 ];
