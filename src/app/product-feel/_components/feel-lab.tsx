@@ -3,13 +3,30 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import {
   ArrowUpDownIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CircleAlertIcon,
+  InfoIcon,
   MoreHorizontalIcon,
+  PlusIcon,
   SearchIcon,
   Settings2Icon,
 } from "lucide-react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -128,9 +145,81 @@ const ARCHETYPES: Archetype[] = [
       fontVar: "--font-ibm-plex-sans",
     },
   },
+  {
+    key: "analytics",
+    name: "Analytics / B2B dashboard",
+    reasoning:
+      "A daily driver for operators: enough density to compare a dozen metrics at a glance, but not trading-desk extreme — people live here eight hours a day, so default whitespace prevents fatigue. Moderate 8px corners and 40px controls read as competent and modern without demanding attention.",
+    config: {
+      radiusPx: 8,
+      controlRem: 2.5,
+      spacingRem: 0.25,
+      fontVar: "--font-geist",
+    },
+  },
+  {
+    key: "government",
+    name: "Government services",
+    reasoning:
+      "GOV.UK's famous answer: zero radius. Institutions signal seriousness by refusing decoration — a rounded corner would read as marketing. But targets are huge (48px) and whitespace is generous, because every citizen of every age and ability must succeed on the first try. Strict shapes, maximum forgiveness.",
+    config: {
+      radiusPx: 0,
+      controlRem: 3,
+      spacingRem: 0.3,
+      fontVar: "--font-ibm-plex-sans",
+    },
+  },
+  {
+    key: "social",
+    name: "Social / consumer app",
+    reasoning:
+      "Thumb-first and feeling-first. Near-pill 20px corners and 48px targets are built for one-handed phone use; airy spacing keeps each post or action emotionally singular. The interface should feel like a friend's space, not a workstation — softness is the entire brand.",
+    config: {
+      radiusPx: 20,
+      controlRem: 3,
+      spacingRem: 0.3,
+      fontVar: "--font-inter",
+    },
+  },
+  {
+    key: "ecommerce",
+    name: "E-commerce storefront",
+    reasoning:
+      "One button pays the rent: Add to cart. It gets a 44px target that can't be missed on mobile, 12px corners that are friendly without turning childish, and default density — product grids need some air but shoppers still compare. Approachable enough to browse, serious enough to enter a card number.",
+    config: {
+      radiusPx: 12,
+      controlRem: 2.75,
+      spacingRem: 0.25,
+      fontVar: "--font-inter",
+    },
+  },
+  {
+    key: "healthcare",
+    name: "Healthcare / medical",
+    reasoning:
+      "The cost of a mis-click is measured in patient safety, so nothing is ambiguous: 48px controls, airy spacing that isolates every decision, and a highly legible humanist face. Corners stay moderate — soft enough to calm anxious users, restrained enough to keep clinical authority.",
+    config: {
+      radiusPx: 8,
+      controlRem: 3,
+      spacingRem: 0.3,
+      fontVar: "--font-ibm-plex-sans",
+    },
+  },
+  {
+    key: "crm",
+    name: "Enterprise CRM / ERP",
+    reasoning:
+      "Forty records per screen, keyboard-driven, used all day by people paid to be fast. Compact gaps and 36px controls maximize rows; 4px corners keep the grid disciplined. Unlike a trading desk it stays in a sans face — this is text-heavy work, and mono would exhaust readers by noon.",
+    config: {
+      radiusPx: 4,
+      controlRem: 2.25,
+      spacingRem: 0.2,
+      fontVar: "--font-inter",
+    },
+  },
 ];
 
-const DEFAULT_CONFIG = ARCHETYPES[2].config;
+const DEFAULT_CONFIG = ARCHETYPES.find((a) => a.key === "editor")!.config;
 
 type Order = {
   id: string;
@@ -334,12 +423,97 @@ function StatsRow() {
   );
 }
 
+const PAGE_SIZE = 5;
+
+function NewOrderDialog({
+  onCreate,
+}: {
+  onCreate: (customer: string, email: string, amount: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [customer, setCustomer] = useState("");
+  const [email, setEmail] = useState("");
+  const [amount, setAmount] = useState("");
+
+  const valid = customer.trim() && email.includes("@") && Number(amount) > 0;
+
+  const submit = () => {
+    if (!valid) return;
+    onCreate(customer.trim(), email.trim(), Number(amount));
+    setCustomer("");
+    setEmail("");
+    setAmount("");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <PlusIcon />
+          New order
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create order</DialogTitle>
+          <DialogDescription>
+            The dialog inherits radius, control size, and density too.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="new-customer">Customer</Label>
+            <Input
+              id="new-customer"
+              value={customer}
+              onChange={(event) => setCustomer(event.target.value)}
+              placeholder="Full name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="new-email">Email</Label>
+            <Input
+              id="new-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@example.com"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="new-amount">Amount</Label>
+            <Input
+              id="new-amount"
+              type="number"
+              min="0"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              placeholder="0.00"
+              className="font-mono tabular-nums"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={!valid} onClick={submit}>
+            Create
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function OrdersTable() {
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortDesc, setSortDesc] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -353,6 +527,30 @@ function OrdersTable() {
       )
       .sort((a, b) => (sortDesc ? b.amount - a.amount : a.amount - b.amount));
   }, [orders, query, statusFilter, sortDesc]);
+
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const paged = visible.slice(
+    safePage * PAGE_SIZE,
+    safePage * PAGE_SIZE + PAGE_SIZE,
+  );
+
+  const createOrder = (customer: string, email: string, amount: number) => {
+    const nextNumber =
+      Math.max(...orders.map((o) => Number(o.id.split("-")[1]) || 0), 1000) + 1;
+    setOrders((prev) => [
+      {
+        id: `ORD-${nextNumber}`,
+        customer,
+        email,
+        status: "pending" as const,
+        amount,
+        date: "Jul 19",
+      },
+      ...prev,
+    ]);
+    setPage(0);
+  };
 
   const allVisibleSelected =
     visible.length > 0 && visible.every((order) => selected.has(order.id));
@@ -418,6 +616,7 @@ function OrdersTable() {
               Archive {selected.size}
             </Button>
           )}
+          <NewOrderDialog onCreate={createOrder} />
         </div>
 
         <Table>
@@ -448,7 +647,7 @@ function OrdersTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.map((order) => (
+            {paged.map((order) => (
               <TableRow
                 key={order.id}
                 data-state={selected.has(order.id) ? "selected" : undefined}
@@ -525,6 +724,36 @@ function OrdersTable() {
             )}
           </TableBody>
         </Table>
+
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            {visible.length} order{visible.length === 1 ? "" : "s"}
+            {selected.size > 0 && ` · ${selected.size} selected`}
+          </p>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              {safePage + 1} / {pageCount}
+            </span>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Previous page"
+              disabled={safePage === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              <ChevronLeftIcon className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label="Next page"
+              disabled={safePage >= pageCount - 1}
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            >
+              <ChevronRightIcon className="size-4" />
+            </Button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -596,6 +825,197 @@ function SettingsForms() {
           ))}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+const TIERS = [
+  {
+    name: "Starter",
+    price: "$0",
+    period: "/mo",
+    cta: "Start free",
+    highlighted: false,
+    features: ["1 project", "Community support", "1GB storage"],
+  },
+  {
+    name: "Growth",
+    price: "$29",
+    period: "/mo",
+    cta: "Start trial",
+    highlighted: true,
+    features: [
+      "Unlimited projects",
+      "Priority support",
+      "100GB storage",
+      "Team roles",
+    ],
+  },
+  {
+    name: "Scale",
+    price: "$99",
+    period: "/mo",
+    cta: "Contact sales",
+    highlighted: false,
+    features: [
+      "Everything in Growth",
+      "SSO / SAML",
+      "Audit log",
+      "99.9% SLA",
+    ],
+  },
+];
+
+function PricingBlock() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      {TIERS.map((tier) => (
+        <Card
+          key={tier.name}
+          className={cn(tier.highlighted && "border-primary")}
+        >
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {tier.name}
+              {tier.highlighted && <Badge>Popular</Badge>}
+            </CardTitle>
+            <CardDescription>
+              <span className="font-mono text-2xl font-semibold tabular-nums text-foreground">
+                {tier.price}
+              </span>
+              {tier.period}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1 flex-col gap-4">
+            <ul className="space-y-2 text-sm">
+              {tier.features.map((feature) => (
+                <li key={feature} className="flex items-center gap-2">
+                  <CheckIcon className="size-4 text-primary" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+            <Button
+              variant={tier.highlighted ? "default" : "outline"}
+              className="mt-auto w-full"
+            >
+              {tier.cta}
+            </Button>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+const ACTIVITY = [
+  { text: "Payout of $4,120.00 sent to DE89···0130", time: "09:41", kind: "ok" },
+  { text: "New order ORD-1042 from Aliya Bekova", time: "09:12", kind: "ok" },
+  { text: "Card verification required for account #82", time: "08:55", kind: "warn" },
+  { text: "Refund of $76.00 issued for ORD-1039", time: "08:20", kind: "ok" },
+  { text: "3 failed login attempts blocked", time: "07:03", kind: "warn" },
+];
+
+function ActivityBlock() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Activity</CardTitle>
+        <CardDescription>
+          Timeline density follows the whitespace setting.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-3">
+          {ACTIVITY.map((event) => (
+            <li key={event.text} className="flex items-start gap-3">
+              <span
+                className={cn(
+                  "mt-1.5 size-2 shrink-0 rounded-full",
+                  event.kind === "ok" ? "bg-primary" : "bg-destructive",
+                )}
+              />
+              <p className="flex-1 text-sm leading-snug">{event.text}</p>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {event.time}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
+const PERMISSION_MEMBERS = [
+  { name: "Aigerim Sat", email: "aigerim@sat.kz", initials: "AS", role: "owner" },
+  { name: "Leo Fischer", email: "leo@fischer.de", initials: "LF", role: "admin" },
+  { name: "Mia Chen", email: "mia@chen.dev", initials: "MC", role: "editor" },
+  { name: "Ivan Petrov", email: "ivan@petrov.io", initials: "IP", role: "viewer" },
+];
+
+function PermissionsBlock() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Permissions</CardTitle>
+        <CardDescription>Role selects sized by control height.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {PERMISSION_MEMBERS.map((member) => (
+          <div key={member.email} className="flex items-center gap-3">
+            <Avatar>
+              <AvatarFallback className="bg-secondary text-xs text-secondary-foreground">
+                {member.initials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{member.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {member.email}
+              </p>
+            </div>
+            <Select defaultValue={member.role}>
+              <SelectTrigger className="w-28" size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="owner">Owner</SelectItem>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
+        <Button variant="outline" className="w-full">
+          <PlusIcon />
+          Invite member
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AlertsBlock() {
+  return (
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Alert>
+        <InfoIcon />
+        <AlertTitle>Scheduled maintenance</AlertTitle>
+        <AlertDescription>
+          Payouts pause on Sunday 02:00–04:00 UTC. Queued transfers resume
+          automatically.
+        </AlertDescription>
+      </Alert>
+      <Alert variant="destructive">
+        <CircleAlertIcon />
+        <AlertTitle>Verification overdue</AlertTitle>
+        <AlertDescription>
+          Transfer limits drop to $1,000 until the business documents are
+          re-verified.
+        </AlertDescription>
+      </Alert>
     </div>
   );
 }
@@ -676,8 +1096,14 @@ export function FeelLab() {
       {/* Everything inside re-reads the scoped vars: radius, control height,
           spacing scale (all gap/padding utilities), and typeface. */}
       <div style={demoVars} className="space-y-4 font-sans">
+        <AlertsBlock />
         <StatsRow />
         <OrdersTable />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ActivityBlock />
+          <PermissionsBlock />
+        </div>
+        <PricingBlock />
         <SettingsForms />
       </div>
 
