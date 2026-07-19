@@ -1,0 +1,6 @@
+{
+  // The Tailwind linter's cssConflict rule false-positives on shadcn/ui's
+  // variant-heavy classes ([&_svg]:*, dark:*, data-*:*, file:*) which target
+  // different selectors/states on purpose.
+  "tailwindCSS.lint.cssConflict": "ignore"
+}
