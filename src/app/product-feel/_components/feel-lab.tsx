@@ -68,6 +68,8 @@ import {
 import { MIXER_APPLY_EVENT } from "@/lib/theme-mixer";
 import { cn } from "@/lib/utils";
 
+import { DOMAIN_MODULES } from "./domains";
+
 type FeelConfig = {
   radiusPx: number;
   controlRem: number;
@@ -221,6 +223,182 @@ const ARCHETYPES: Archetype[] = [
 
 const DEFAULT_CONFIG = ARCHETYPES.find((a) => a.key === "editor")!.config;
 
+// Per-archetype detail for the "Why this config?" dialog.
+const WHY: Record<
+  string,
+  { radius: string; control: string; whitespace: string; typeface: string }
+> = {
+  trading: {
+    radius:
+      "4px keeps every surface feeling machined. Rounder corners would eat horizontal space in dense tables and read as consumer software — the wrong signal when real money moves on keypresses.",
+    control:
+      "36px is the floor for reliable clicking, and traders are power users on desktops with mice — precision is assumed, so screen space goes to data instead of padding.",
+    whitespace:
+      "Compact gaps put more rows and tickers in one glance. Scanning cost beats reading comfort here: the user's job is comparison, not contemplation.",
+    typeface:
+      "A mono face aligns every digit into columns, so a price change is visible as a shape change. Proportional digits would make $1,111 narrower than $9,999 and break column scanning.",
+  },
+  payments: {
+    radius:
+      "10px is the trust zone: soft enough to feel human, firm enough to feel institutional. Sharp corners read as cold at checkout; full pills read as playful — neither survives a card form.",
+    control:
+      "48px targets make a mis-tap on 'Pay' nearly impossible, on any device, with shaky hands, in a hurry. When the action moves money, Fitts's law is a safety feature.",
+    whitespace:
+      "Airy gaps isolate one decision per glance. A cramped checkout feels like fine print; generous space reads as nothing-to-hide.",
+    typeface:
+      "A humanist sans (Inter) is what banks and wallets trained users to trust. Familiarity lowers perceived risk exactly where risk perception decides conversion.",
+  },
+  editor: {
+    radius:
+      "6px is quiet: visible enough to soften panel edges, small enough to disappear during eight-hour sessions. Decoration a user sees ten thousand times must round to zero attention.",
+    control:
+      "40px balances clickability with chrome economy — toolbars can't crowd the buffer, but a missed click during flow costs more than the pixels saved.",
+    whitespace:
+      "Default density: code itself is dense, so the chrome around it stays neutral rather than competing or cramping.",
+    typeface:
+      "The UI wears a plain sans while the buffer wears mono — the contrast is the point: chrome recedes, content is the instrument.",
+  },
+  notes: {
+    radius:
+      "16px feels like paper and pill bottles, not machinery. Big radii tell the user nothing here is irreversible — the right emotion for a private writing space.",
+    control:
+      "44px controls are unhurried and forgiving. Nobody is racing; targets can afford warmth.",
+    whitespace:
+      "Airy spacing gives thoughts room. Cramped notes feel like a task list; air feels like a notebook.",
+    typeface:
+      "A warm, plain sans invites writing. Anything technical-looking would make journaling feel like filing a report.",
+  },
+  analytics: {
+    radius:
+      "8px is the modern-SaaS default: enough softness to feel current, enough restraint to keep charts and numbers as the loudest thing on screen.",
+    control:
+      "40px suits a daily-driver: operators click these controls hundreds of times a day, but the dashboard still needs room for a dozen metrics.",
+    whitespace:
+      "Default density lets KPI tiles and charts coexist without either luxury spacing (wasted comparisons) or trading-desk cramming (fatigue by noon).",
+    typeface:
+      "A neutral grotesque with tabular figures keeps metric labels quiet and numbers aligned.",
+  },
+  government: {
+    radius:
+      "0px, deliberately. GOV.UK's research settled this: rounded corners read as marketing, and a state service must read as procedure. Square corners are the institutional voice.",
+    control:
+      "48px because the audience is everyone — every age, every ability, every device. The service fails unless the least able citizen succeeds on the first try.",
+    whitespace:
+      "Maximum air, one question at a time. Density is for experts; a citizen fills this form once a decade.",
+    typeface:
+      "A highly legible workhorse sans at generous sizes. Nothing expressive: the form is the government speaking, and it should sound plain.",
+  },
+  social: {
+    radius:
+      "20px — near-pill. Softness is the brand: avatars are circles, cards are pebbles, and every shape says 'friend space', not 'workstation'.",
+    control:
+      "48px because this is thumbs on phones, one-handed, in motion. Miss rates that are acceptable on desktop kill mobile engagement.",
+    whitespace:
+      "Airy gaps make each post emotionally singular — the feed is a stream of moments, not a data table.",
+    typeface:
+      "Inter-class sans: warm, rounded enough to feel personal, and bulletproof at small mobile sizes.",
+  },
+  ecommerce: {
+    radius:
+      "12px keeps product cards friendly while the checkout still feels credible. Softer than a bank, firmer than a toy store.",
+    control:
+      "44px: 'Add to cart' is the business model, and most of it happens on phones. The buy button gets the biggest reliable thumb target that doesn't look cartoonish.",
+    whitespace:
+      "Default density — product grids need enough air to photograph well, but shoppers compare items, so cards stay within one eyespan.",
+    typeface:
+      "A familiar humanist sans keeps attention on product imagery and prices; the typeface should never outstyle the merchandise.",
+  },
+  crm: {
+    radius:
+      "4px disciplines a screen full of tables and forms into a grid. Enterprise users read structure, not decoration.",
+    control:
+      "36px maximizes rows per screen for keyboard-first operators who live here all day and are paid to be fast.",
+    whitespace:
+      "Compact gaps: forty records per screen is the requirement. Fatigue is managed by rhythm and alignment, not by air.",
+    typeface:
+      "Unlike trading, this is text-heavy — names, companies, notes — so a sans face carries it; mono is reserved for the money column.",
+  },
+  healthcare: {
+    radius:
+      "8px calms without losing clinical authority. Sharp corners raise anxiety in patients; playful pills undermine trust in clinicians.",
+    control:
+      "48px because a mis-click here is measured in patient safety. Every actionable element is deliberately oversized and isolated.",
+    whitespace:
+      "Airy spacing separates every decision — medication, slot, patient — so nothing can be confused with its neighbor.",
+    typeface:
+      "Maximum-legibility humanist sans: users include stressed patients, elderly readers, and staff wearing gloves on tablets.",
+  },
+};
+
+// Larger surfaces get proportionally larger radii (the app's tokens: cards
+// ~1.4×, dialogs ~1.8× the base) so nested corners stay concentric.
+function WhyDialog({ archetype }: { archetype: Archetype }) {
+  const why = WHY[archetype.key];
+  const base = archetype.config.radiusPx;
+  const card = Math.round(base * 1.4);
+  const dialog = Math.round(base * 1.8);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <InfoIcon />
+          Why this config?
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Why {archetype.name.toLowerCase()} feels like this</DialogTitle>
+          <DialogDescription>{archetype.reasoning}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 text-sm leading-relaxed">
+          <div className="space-y-1">
+            <p className="font-medium">
+              Radius —{" "}
+              <span className="font-mono tabular-nums">{base}px</span> base
+            </p>
+            <p className="text-muted-foreground">{why.radius}</p>
+            <p className="text-muted-foreground">
+              Radius grows with component size: buttons and inputs sit at the{" "}
+              <span className="font-mono tabular-nums">{base}px</span> base,
+              cards at ~
+              <span className="font-mono tabular-nums">{card}px</span>, dialogs
+              at ~<span className="font-mono tabular-nums">{dialog}px</span>.
+              A larger surface needs a larger curve to look equally round, and
+              scaling keeps nested corners concentric instead of pinching at
+              the edges.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium">
+              Controls —{" "}
+              <span className="font-mono tabular-nums">
+                {archetype.config.controlRem * 16}px
+              </span>
+            </p>
+            <p className="text-muted-foreground">{why.control}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium">
+              Whitespace —{" "}
+              {DENSITIES.find((d) => d.rem === archetype.config.spacingRem)
+                ?.label ?? "Custom"}
+            </p>
+            <p className="text-muted-foreground">{why.whitespace}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium">
+              Typeface —{" "}
+              {FONTS.find((f) => f.cssVar === archetype.config.fontVar)?.name}
+            </p>
+            <p className="text-muted-foreground">{why.typeface}</p>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 type Order = {
   id: string;
   customer: string;
@@ -250,41 +428,34 @@ const STATUS_BADGE: Record<Order["status"], "secondary" | "outline" | "destructi
 };
 
 function ConfigBar({
+  archetypeKey,
+  onArchetype,
   config,
   setConfig,
 }: {
+  archetypeKey: string;
+  onArchetype: (key: string) => void;
   config: FeelConfig;
   setConfig: (config: FeelConfig) => void;
 }) {
-  const activePreset = ARCHETYPES.find(
-    (a) => JSON.stringify(a.config) === JSON.stringify(config),
-  );
+  const archetype = ARCHETYPES.find((a) => a.key === archetypeKey)!;
 
   return (
     <div className="sticky top-14 z-40 flex flex-wrap items-center gap-2 rounded-xl border bg-background/90 p-3 backdrop-blur">
-      <Select
-        value={activePreset?.key ?? "custom"}
-        onValueChange={(key) => {
-          const archetype = ARCHETYPES.find((a) => a.key === key);
-          if (archetype) setConfig(archetype.config);
-        }}
-      >
+      <Select value={archetypeKey} onValueChange={onArchetype}>
         <SelectTrigger className="w-52">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {ARCHETYPES.map((archetype) => (
-            <SelectItem key={archetype.key} value={archetype.key}>
-              {archetype.name}
+          {ARCHETYPES.map((a) => (
+            <SelectItem key={a.key} value={a.key}>
+              {a.name}
             </SelectItem>
           ))}
-          {!activePreset && (
-            <SelectItem value="custom" disabled>
-              Custom
-            </SelectItem>
-          )}
         </SelectContent>
       </Select>
+
+      <WhyDialog archetype={archetype} />
 
       <Popover>
         <PopoverTrigger asChild>
@@ -1021,9 +1192,9 @@ function AlertsBlock() {
 }
 
 function ArchetypeNotes({
-  setConfig,
+  onArchetype,
 }: {
-  setConfig: (config: FeelConfig) => void;
+  onArchetype: (key: string) => void;
 }) {
   return (
     <section className="space-y-4">
@@ -1067,7 +1238,7 @@ function ArchetypeNotes({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setConfig(archetype.config)}
+                onClick={() => onArchetype(archetype.key)}
               >
                 Preview this feel
               </Button>
@@ -1080,7 +1251,17 @@ function ArchetypeNotes({
 }
 
 export function FeelLab() {
+  const [archetypeKey, setArchetypeKey] = useState("editor");
   const [config, setConfig] = useState<FeelConfig>(DEFAULT_CONFIG);
+
+  const selectArchetype = (key: string) => {
+    const archetype = ARCHETYPES.find((a) => a.key === key);
+    if (!archetype) return;
+    setArchetypeKey(key);
+    setConfig(archetype.config);
+  };
+
+  const domain = DOMAIN_MODULES[archetypeKey];
 
   const demoVars = {
     "--radius": `${config.radiusPx / 16}rem`,
@@ -1091,11 +1272,31 @@ export function FeelLab() {
 
   return (
     <div className="space-y-6">
-      <ConfigBar config={config} setConfig={setConfig} />
+      <ConfigBar
+        archetypeKey={archetypeKey}
+        onArchetype={selectArchetype}
+        config={config}
+        setConfig={setConfig}
+      />
 
       {/* Everything inside re-reads the scoped vars: radius, control height,
           spacing scale (all gap/padding utilities), and typeface. */}
       <div style={demoVars} className="space-y-4 font-sans">
+        {domain && (
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">
+                {domain.title}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {domain.description}
+              </p>
+            </div>
+            {/* Key resets module state when switching domains. */}
+            <domain.Component key={archetypeKey} />
+          </section>
+        )}
+
         <AlertsBlock />
         <StatsRow />
         <OrdersTable />
@@ -1107,7 +1308,7 @@ export function FeelLab() {
         <SettingsForms />
       </div>
 
-      <ArchetypeNotes setConfig={setConfig} />
+      <ArchetypeNotes onArchetype={selectArchetype} />
     </div>
   );
 }

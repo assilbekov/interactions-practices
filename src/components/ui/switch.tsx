@@ -27,7 +27,10 @@ function Switch({
         // The stock Nova thumb used primary-foreground in dark, which assumes a
         // near-white dark primary; with mixer-colored primaries that renders a
         // near-black dot on a colored track. A white thumb works for any hue.
-        className="pointer-events-none block rounded-full bg-white shadow-sm ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 group-data-[size=default]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=sm]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=default]/switch:data-unchecked:translate-x-0 group-data-[size=sm]/switch:data-unchecked:translate-x-0"
+        // Fixed px thumb sizes: the track is fixed px, and size-4/size-3 would
+        // rescale with the themable --spacing density, leaving the checked
+        // thumb (translated by its own width) short of the track's right edge.
+        className="pointer-events-none block rounded-full bg-white shadow-sm ring-0 transition-transform group-data-[size=default]/switch:size-[16px] group-data-[size=sm]/switch:size-[12px] group-data-[size=default]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=sm]/switch:data-checked:translate-x-[calc(100%-2px)] group-data-[size=default]/switch:data-unchecked:translate-x-0 group-data-[size=sm]/switch:data-unchecked:translate-x-0"
       />
     </SwitchPrimitive.Root>
   )
