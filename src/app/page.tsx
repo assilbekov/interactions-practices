@@ -23,6 +23,11 @@ const item = {
 };
 
 export default function Home() {
+  // Live pages first, then the Soon backlog — stable within each group.
+  const ordered = [...patterns].sort((a, b) =>
+    a.status === b.status ? 0 : a.status === "live" ? -1 : 1,
+  );
+
   return (
     <div className="space-y-8">
       <section className="space-y-2">
@@ -42,7 +47,7 @@ export default function Home() {
         animate="show"
         className="grid gap-4 sm:grid-cols-2"
       >
-        {patterns.map((pattern) =>
+        {ordered.map((pattern) =>
           pattern.status === "live" ? (
             <motion.div key={pattern.slug} variants={item} whileHover={{ y: -3 }}>
               <Link

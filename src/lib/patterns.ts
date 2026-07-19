@@ -52,22 +52,22 @@ export const patterns: Pattern[] = [
     slug: "skeleton-transitions",
     title: "Skeleton → content handoff",
     description:
-      "The moment content replaces its skeleton: hard swap, fade-through, or blur-up — which one hides the seam?",
-    status: "soon",
+      "The moment content replaces its skeleton: hard swap, crossfade, or blur-up — which one hides the seam?",
+    status: "live",
   },
   {
     slug: "form-validation-timing",
     title: "Form validation timing",
     description:
-      "As-you-type, on-blur, or on-submit — when should a form call you wrong? Punish early and users feel scolded.",
-    status: "soon",
+      "As-you-type, on-blur, or on-submit — reward early, punish late. Type slowly into each form and feel it.",
+    status: "live",
   },
   {
     slug: "undo-vs-confirm",
     title: "Undo vs. confirm",
     description:
       "Delete instantly with an undo toast, or block with an 'Are you sure?' dialog — trust versus friction.",
-    status: "soon",
+    status: "live",
   },
   {
     slug: "empty-states",
@@ -94,15 +94,15 @@ export const patterns: Pattern[] = [
     slug: "infinite-scroll-vs-pagination",
     title: "Infinite scroll vs. pagination",
     description:
-      "Feeds want flow, tables want landmarks — plus the footer that infinite scroll makes unreachable.",
-    status: "soon",
+      "10,000 rows three ways — pagination, naive infinite scroll, and virtualization, with live DOM counters.",
+    status: "live",
   },
   {
     slug: "error-recovery",
     title: "Error recovery",
     description:
       "Full-page error, inline retry, or auto-retry with backoff — failing without losing the user's work or trust.",
-    status: "soon",
+    status: "live",
   },
   {
     slug: "progress-indication",
@@ -115,7 +115,7 @@ export const patterns: Pattern[] = [
     slug: "success-moments",
     title: "Success moments",
     description:
-      "Checkmark, subtle toast, or confetti — how much celebration an action deserves before it gets annoying.",
-    status: "soon",
+      "Checkmark, subtle toast, or confetti — celebration scaled to rarity, and what overuse does to delight.",
+    status: "live",
   },
 ];
