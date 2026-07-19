@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PlusIcon, SearchIcon, Trash2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -60,11 +61,13 @@ export function NotesModule() {
   };
 
   const remove = (id: number) => {
+    const note = notes.find((n) => n.id === id);
     setNotes((prev) => {
-      const next = prev.filter((note) => note.id !== id);
+      const next = prev.filter((n) => n.id !== id);
       if (id === activeId && next.length > 0) setActiveId(next[0].id);
       return next;
     });
+    if (note) toast(`Deleted "${note.title || "Untitled"}"`);
   };
 
   return (

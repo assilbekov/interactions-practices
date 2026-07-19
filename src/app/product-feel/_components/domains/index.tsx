@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 
 import { AnalyticsModule } from "./analytics";
 import { CrmModule } from "./crm";
+import { DesignModule } from "./design";
 import { EcommerceModule } from "./ecommerce";
 import { EditorModule } from "./editor";
 import { GovernmentModule } from "./government";
@@ -77,5 +78,11 @@ export const DOMAIN_MODULES: Record<string, DomainModule> = {
     description:
       "Stage transitions per lead recompute pipeline and won totals; filter and add leads inline.",
     Component: CrmModule,
+  },
+  design: {
+    title: "Canvas editor",
+    description:
+      "Layers panel with visibility toggles, draggable shapes on an SVG canvas, and a live inspector: position, size, fill, opacity, duplicate, delete.",
+    Component: DesignModule,
   },
 };

@@ -1,6 +1,9 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
+import NumberFlow from "@number-flow/react";
+import { AnimatePresence, motion } from "motion/react";
+import { toast } from "sonner";
 import {
   ArrowUpDownIcon,
   CheckIcon,
@@ -219,6 +222,18 @@ const ARCHETYPES: Archetype[] = [
       fontVar: "--font-inter",
     },
   },
+  {
+    key: "design",
+    name: "Design tool",
+    reasoning:
+      "The canvas is the product; the chrome is scaffolding. Compact 36px controls and tight gaps keep panels thin so artwork gets the pixels, 6px corners keep the UI quieter than anything the user is designing, and the interface must never be more opinionated than the work it frames.",
+    config: {
+      radiusPx: 6,
+      controlRem: 2.25,
+      spacingRem: 0.2,
+      fontVar: "--font-inter",
+    },
+  },
 ];
 
 const DEFAULT_CONFIG = ARCHETYPES.find((a) => a.key === "editor")!.config;
@@ -327,6 +342,16 @@ const WHY: Record<
       "Airy spacing separates every decision — medication, slot, patient — so nothing can be confused with its neighbor.",
     typeface:
       "Maximum-legibility humanist sans: users include stressed patients, elderly readers, and staff wearing gloves on tablets.",
+  },
+  design: {
+    radius:
+      "6px keeps panels softer than a spreadsheet but stricter than a consumer app — and crucially, quieter than whatever is on the canvas. The user's design must always be the roundest, loudest thing on screen.",
+    control:
+      "36px panel controls, used by professionals with a mouse and shortcuts. Every extra pixel of chrome is a pixel stolen from the artwork.",
+    whitespace:
+      "Compact: inspectors stack a dozen properties in a sidebar. Designers scan labeled clusters, so rhythm and alignment do the work air normally does.",
+    typeface:
+      "Inter at small sizes is the de-facto design-tool face — neutral enough to sit beside any typography the user is working with.",
   },
 };
 
@@ -469,7 +494,7 @@ function ConfigBar({
             <div className="flex items-center justify-between">
               <span className="text-xs font-medium">Radius</span>
               <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                {config.radiusPx}px
+                <NumberFlow value={config.radiusPx} suffix="px" />
               </span>
             </div>
             <Slider
@@ -552,7 +577,7 @@ function ConfigBar({
       <Button
         variant="ghost"
         className="ml-auto"
-        onClick={() =>
+        onClick={() => {
           window.dispatchEvent(
             new CustomEvent(MIXER_APPLY_EVENT, {
               detail: {
@@ -560,8 +585,11 @@ function ConfigBar({
                 control: config.controlRem,
               },
             }),
-          )
-        }
+          );
+          toast.success("Applied to the whole app", {
+            description: `Radius ${config.radiusPx}px · controls ${config.controlRem * 16}px — saved in the theme mixer`,
+          });
+        }}
       >
         Apply to whole app
       </Button>
@@ -721,6 +749,9 @@ function OrdersTable() {
       ...prev,
     ]);
     setPage(0);
+    toast.success(`Order ORD-${nextNumber} created`, {
+      description: `${customer} · $${amount.toFixed(2)}`,
+    });
   };
 
   const allVisibleSelected =
@@ -742,8 +773,10 @@ function OrdersTable() {
     });
 
   const archiveSelected = () => {
+    const count = selected.size;
     setOrders((prev) => prev.filter((order) => !selected.has(order.id)));
     setSelected(new Set());
+    toast(`Archived ${count} order${count === 1 ? "" : "s"}`);
   };
 
   const setStatus = (id: string, status: Order["status"]) =>
@@ -1283,18 +1316,27 @@ export function FeelLab() {
           spacing scale (all gap/padding utilities), and typeface. */}
       <div style={demoVars} className="space-y-4 font-sans">
         {domain && (
-          <section className="space-y-3">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">
-                {domain.title}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {domain.description}
-              </p>
-            </div>
-            {/* Key resets module state when switching domains. */}
-            <domain.Component key={archetypeKey} />
-          </section>
+          <AnimatePresence mode="wait" initial={false}>
+            {/* Key remounts (resetting module state) and animates the swap. */}
+            <motion.section
+              key={archetypeKey}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="space-y-3"
+            >
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight">
+                  {domain.title}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {domain.description}
+                </p>
+              </div>
+              <domain.Component />
+            </motion.section>
+          </AnimatePresence>
         )}
 
         <AlertsBlock />

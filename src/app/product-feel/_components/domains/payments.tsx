@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckIcon, CreditCardIcon, Loader2Icon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,7 +83,12 @@ export function PaymentsModule() {
     setTouched(true);
     if (!valid) return;
     setStatus("processing");
-    setTimeout(() => setStatus("paid"), 1400);
+    setTimeout(() => {
+      setStatus("paid");
+      toast.success(`Payment of $${AMOUNT.toFixed(2)} confirmed`, {
+        description: `${cardBrand(card) ?? "Card"} ····${card.replace(/\D/g, "").slice(-4)}`,
+      });
+    }, 1400);
   };
 
   if (status === "paid") {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/header";
 import { ThemeInitScript } from "@/components/theme-init-script";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { fontVariableClasses } from "@/lib/fonts";
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
           <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
             {children}
           </main>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

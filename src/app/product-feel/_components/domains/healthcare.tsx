@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CalendarIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,9 @@ export function HealthcareModule() {
       { id: nextId, patient: patient.trim(), reason, slot },
     ]);
     setNextId((id) => id + 1);
+    toast.success(`Appointment booked for ${patient.trim()}`, {
+      description: slot,
+    });
     setPatient("");
     setSlot(undefined);
   };
@@ -170,11 +174,14 @@ export function HealthcareModule() {
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Cancel appointment for ${appointment.patient}`}
-                  onClick={() =>
+                  onClick={() => {
                     setAppointments((prev) =>
                       prev.filter((a) => a.id !== appointment.id),
-                    )
-                  }
+                    );
+                    toast(`Appointment cancelled — slot released`, {
+                      description: appointment.slot,
+                    });
+                  }}
                 >
                   <XIcon className="size-4" />
                 </Button>

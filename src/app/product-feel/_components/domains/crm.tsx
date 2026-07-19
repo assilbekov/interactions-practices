@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { PlusIcon } from "lucide-react";
+import { toast } from "sonner";
 
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,10 +77,17 @@ export function CrmModule() {
     .filter((lead) => lead.stage === "won")
     .reduce((sum, lead) => sum + lead.value, 0);
 
-  const setStage = (id: number, stage: Stage) =>
+  const setStage = (id: number, stage: Stage) => {
     setLeads((prev) =>
       prev.map((lead) => (lead.id === id ? { ...lead, stage } : lead)),
     );
+    const lead = leads.find((l) => l.id === id);
+    if (lead && stage === "won") {
+      toast.success(
+        `Deal won — $${lead.value.toLocaleString("en-US")} from ${lead.company}`,
+      );
+    }
+  };
 
   const addLead = () => {
     if (!name.trim() || !company.trim() || Number(value) <= 0) return;
@@ -93,6 +102,7 @@ export function CrmModule() {
       },
     ]);
     setNextId((id) => id + 1);
+    toast(`Lead added: ${name.trim()} (${company.trim()})`);
     setName("");
     setCompany("");
     setValue("");
@@ -110,15 +120,21 @@ export function CrmModule() {
         <div className="flex flex-wrap items-center gap-4">
           <div>
             <p className="text-xs text-muted-foreground">Open pipeline</p>
-            <p className="font-mono text-lg font-semibold tabular-nums">
-              ${pipeline.toLocaleString("en-US")}
-            </p>
+            <AnimatedNumber
+              value={pipeline}
+              format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              loadingMs={700}
+              className="font-mono text-lg font-semibold tabular-nums"
+            />
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Won</p>
-            <p className="font-mono text-lg font-semibold tabular-nums">
-              ${won.toLocaleString("en-US")}
-            </p>
+            <AnimatedNumber
+              value={won}
+              format={{ style: "currency", currency: "USD", maximumFractionDigits: 0 }}
+              loadingMs={700}
+              className="font-mono text-lg font-semibold tabular-nums"
+            />
           </div>
           <div className="flex flex-1 flex-wrap justify-end gap-1.5">
             {STAGES.map((stage) => {

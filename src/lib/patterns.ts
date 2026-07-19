@@ -28,24 +28,24 @@ export const patterns: Pattern[] = [
     status: "live",
   },
   {
+    slug: "number-transitions",
+    title: "Number transitions",
+    description:
+      "The right way to load and change a number — blur, reveal, then roll — and the ways to get it wrong.",
+    status: "live",
+  },
+  {
     slug: "optimistic-updates",
     title: "Optimistic updates",
     description:
-      "Update instantly and roll back on error, or wait for the server?",
-    status: "soon",
+      "Update instantly and roll back on error, or wait for the server? Flip failures on and watch each strategy cope.",
+    status: "live",
   },
   {
     slug: "button-feedback",
     title: "Button feedback",
     description:
-      "Spinner-in-button, disabled state, or instant response with a toast.",
-    status: "soon",
-  },
-  {
-    slug: "number-transitions",
-    title: "Number transitions",
-    description:
-      "Jump, count-up, or slot-roll — how should a balance change feel?",
-    status: "soon",
+      "Four submit buttons, one slow API — the request counter exposes which ones invite double-submits.",
+    status: "live",
   },
 ];

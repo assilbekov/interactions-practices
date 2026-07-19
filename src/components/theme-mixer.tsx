@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import NumberFlow from "@number-flow/react";
 import { PaletteIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +111,10 @@ function HueRow({
         aria-label={`${label} hue`}
       />
       <p className="text-xs text-muted-foreground">
-        Hue: <span className="font-mono tabular-nums">{hue}</span>
+        Hue:{" "}
+        <span className="font-mono tabular-nums">
+          <NumberFlow value={hue} />
+        </span>
       </p>
     </div>
   );
@@ -169,6 +174,7 @@ export function ThemeMixer() {
       { name, settings },
     ]);
     setPresetName("");
+    toast.success(`Preset "${name}" saved`);
   };
 
   const radiusPx = Math.round(settings.radius * 16);
@@ -298,7 +304,10 @@ export function ThemeMixer() {
             aria-label="Corner radius"
           />
           <p className="text-xs text-muted-foreground">
-            Radius: <span className="font-mono tabular-nums">{radiusPx}px</span>
+            Radius:{" "}
+            <span className="font-mono tabular-nums">
+              <NumberFlow value={radiusPx} suffix="px" />
+            </span>
           </p>
         </div>
 

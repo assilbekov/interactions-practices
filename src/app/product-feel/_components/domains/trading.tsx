@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,14 +137,15 @@ function PriceChart({ series }: { series: number[] }) {
     <div className="space-y-1">
       <div className="flex items-baseline justify-between">
         <p className="text-sm font-medium">{SYMBOL} · last</p>
-        <p
+        <AnimatedNumber
+          value={last}
+          format={{ style: "currency", currency: "USD" }}
+          loadingMs={700}
           className={cn(
             "font-mono text-lg font-semibold tabular-nums",
             up ? "text-primary" : "text-destructive",
           )}
-        >
-          ${last.toFixed(2)}
-        </p>
+        />
       </div>
       <div className="relative">
         <svg
@@ -281,6 +284,12 @@ function OrderTicket({
         ],
       };
     });
+    if (type === "limit") {
+      toast(
+        `LIMIT ${side.toUpperCase()} ${quantity} ${SYMBOL} @ ${limitPrice.toFixed(2)}`,
+        { className: "font-mono", duration: 2000 },
+      );
+    }
   };
 
   return (
@@ -380,6 +389,17 @@ function OrderTicket({
 
 export function TradingModule() {
   const [book, setBook] = useState<Book>(INITIAL_BOOK);
+  const lastFillId = useRef<number | null>(null);
+
+  useEffect(() => {
+    const fill = book.fills[0];
+    if (!fill || lastFillId.current === fill.id) return;
+    lastFillId.current = fill.id;
+    toast.success(
+      `${fill.side.toUpperCase()} ${fill.qty} ${SYMBOL} @ ${fill.price.toFixed(2)} · ${fill.kind}`,
+      { className: "font-mono", duration: 2000 },
+    );
+  }, [book.fills]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -411,21 +431,30 @@ export function TradingModule() {
           <div className="grid grid-cols-3 gap-3 text-sm">
             <div>
               <p className="text-xs text-muted-foreground">Cash</p>
-              <p className="font-mono font-medium tabular-nums">
-                ${book.cash.toFixed(2)}
-              </p>
+              <AnimatedNumber
+                value={book.cash}
+                format={{ style: "currency", currency: "USD" }}
+                loadingMs={700}
+                className="font-mono font-medium tabular-nums"
+              />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Position</p>
-              <p className="font-mono font-medium tabular-nums">
-                {book.position} {SYMBOL}
-              </p>
+              <AnimatedNumber
+                value={book.position}
+                suffix={` ${SYMBOL}`}
+                loadingMs={700}
+                className="font-mono font-medium tabular-nums"
+              />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Equity</p>
-              <p className="font-mono font-medium tabular-nums">
-                ${equity.toFixed(2)}
-              </p>
+              <AnimatedNumber
+                value={equity}
+                format={{ style: "currency", currency: "USD" }}
+                loadingMs={700}
+                className="font-mono font-medium tabular-nums"
+              />
             </div>
           </div>
 

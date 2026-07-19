@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -96,9 +97,16 @@ export function AnalyticsModule() {
             </SelectContent>
           </Select>
           <div className="ml-auto flex items-baseline gap-2">
-            <span className="font-mono text-xl font-semibold tabular-nums">
-              {fmt(total, metric.unit)}
-            </span>
+            <AnimatedNumber
+              value={total}
+              format={
+                metric.unit === "currency"
+                  ? { style: "currency", currency: "USD", maximumFractionDigits: 0 }
+                  : {}
+              }
+              loadingMs={700}
+              className="font-mono text-xl font-semibold tabular-nums"
+            />
             <Badge variant={delta >= 0 ? "secondary" : "destructive"}>
               {delta >= 0 ? "+" : ""}
               {delta.toFixed(1)}% vs prev

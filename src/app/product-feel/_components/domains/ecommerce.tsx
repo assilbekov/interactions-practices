@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { MinusIcon, PlusIcon, ShoppingCartIcon, XIcon } from "lucide-react";
+import { toast } from "sonner";
 
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +47,8 @@ export function EcommerceModule() {
   const add = (id: string) => {
     setOrdered(false);
     setCart((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
+    const product = PRODUCTS.find((p) => p.id === id);
+    if (product) toast(`${product.name} added to cart`);
   };
 
   const change = (id: string, delta: number) =>
@@ -196,9 +200,12 @@ export function EcommerceModule() {
             )}
             <div className="flex justify-between font-medium">
               <span>Total</span>
-              <span className="font-mono tabular-nums">
-                ${total.toFixed(2)}
-              </span>
+              <AnimatedNumber
+                value={total}
+                format={{ style: "currency", currency: "USD" }}
+                loadingMs={0}
+                className="font-mono tabular-nums"
+              />
             </div>
           </div>
 
@@ -211,6 +218,9 @@ export function EcommerceModule() {
               setCart({});
               setApplied(false);
               setPromo("");
+              toast.success(`Order placed — $${total.toFixed(2)}`, {
+                description: "Confirmation sent to your email.",
+              });
             }}
           >
             Checkout

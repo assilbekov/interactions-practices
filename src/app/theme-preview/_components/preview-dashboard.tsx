@@ -7,7 +7,9 @@ import {
   CheckIcon,
   Loader2Icon,
 } from "lucide-react";
+import { toast } from "sonner";
 
+import { AnimatedNumber } from "@/components/animated-number";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,9 +26,9 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const STATS = [
-  { label: "Total balance", value: "$24,562.00", change: "+4.2%", up: true },
-  { label: "Income", value: "$8,210.50", change: "+12.1%", up: true },
-  { label: "Spending", value: "$3,845.20", change: "-2.4%", up: false },
+  { label: "Total balance", value: 24562.0, change: "+4.2%", up: true },
+  { label: "Income", value: 8210.5, change: "+12.1%", up: true },
+  { label: "Spending", value: 3845.2, change: "-2.4%", up: false },
 ];
 
 const WEEKLY_ACTIVITY = [42, 65, 38, 80, 55, 92, 70];
@@ -50,9 +52,11 @@ function StatCards() {
         <Card key={stat.label}>
           <CardContent className="space-y-1.5">
             <p className="text-sm text-muted-foreground">{stat.label}</p>
-            <p className="font-mono text-2xl font-semibold tabular-nums">
-              {stat.value}
-            </p>
+            <AnimatedNumber
+              value={stat.value}
+              format={{ style: "currency", currency: "USD" }}
+              className="font-mono text-2xl font-semibold tabular-nums"
+            />
             <Badge variant={stat.up ? "secondary" : "outline"}>
               {stat.up ? (
                 <ArrowUpRightIcon className="size-3" />
@@ -153,6 +157,9 @@ function TransferForm() {
     setStatus("sending");
     setTimeout(() => {
       setStatus("sent");
+      toast.success(`Sent $${Number(amount).toFixed(2)} to ${recipient}`, {
+        description: instant ? "Instant transfer" : "Arrives in 1–2 days",
+      });
       setTimeout(() => {
         setStatus("idle");
         setRecipient("");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import NumberFlow from "@number-flow/react";
 import { RotateCwIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,11 @@ export function ComparisonLab() {
             aria-label="Simulated API latency"
           />
           <span className="w-14 text-right text-sm font-medium tabular-nums">
-            {(latency / 1000).toFixed(1)}s
+            <NumberFlow
+              value={latency / 1000}
+              format={{ minimumFractionDigits: 1, maximumFractionDigits: 1 }}
+              suffix="s"
+            />
           </span>
         </div>
         <Button onClick={() => setRunId((id) => id + 1)}>
