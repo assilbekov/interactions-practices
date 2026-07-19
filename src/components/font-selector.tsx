@@ -8,10 +8,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   DEFAULT_FONT,
+  FONT_GROUPS,
   FONT_OPTIONS,
   FONT_STORAGE_KEY,
 } from "@/lib/fonts";
@@ -44,16 +47,26 @@ export function FontSelector() {
           <TypeIcon className="size-4.5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {FONT_OPTIONS.map((option) => (
-          <DropdownMenuItem
-            key={option.name}
-            onClick={() => setFont(option.name)}
-            style={{ fontFamily: `var(${option.cssVar})` }}
-          >
-            {option.name}
-            {font === option.name && <CheckIcon className="ml-auto size-4" />}
-          </DropdownMenuItem>
+      <DropdownMenuContent align="end" className="w-52">
+        {FONT_GROUPS.map((group, index) => (
+          <div key={group.label}>
+            {index > 0 && <DropdownMenuSeparator />}
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
+              {group.label}
+            </DropdownMenuLabel>
+            {group.options.map((option) => (
+              <DropdownMenuItem
+                key={option.name}
+                onClick={() => setFont(option.name)}
+                style={{ fontFamily: `var(${option.cssVar})` }}
+              >
+                {option.name}
+                {font === option.name && (
+                  <CheckIcon className="ml-auto size-4" />
+                )}
+              </DropdownMenuItem>
+            ))}
+          </div>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
