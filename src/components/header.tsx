@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SparklesIcon } from "lucide-react";
 
+import { ThemeMixer } from "@/components/theme-mixer";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Header() {
@@ -14,7 +15,10 @@ export function Header() {
           <SparklesIcon className="size-4.5" />
           Interactions Practices
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <ThemeMixer />
+          <ThemeToggle />
+        </div>
       </div>
     </header>
   );
