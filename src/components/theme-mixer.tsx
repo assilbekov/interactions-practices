@@ -1,94 +1,131 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PaletteIcon } from "lucide-react";
+import { PaletteIcon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import {
-  GRAY_SCALES,
+  BUILT_IN_PRESETS,
+  DEFAULT_HUES,
   MIXER_STORAGE_KEY,
-  ROLE_CSS_VARS,
-  ROLE_SWATCHES,
+  PRESETS_STORAGE_KEY,
+  buildCssVars,
+  grayPreview,
+  rolePreview,
   type ColorRole,
-  type MixerSelection,
+  type MixerHues,
+  type Preset,
 } from "@/lib/theme-mixer";
 import { cn } from "@/lib/utils";
 
 const ROLES: { role: ColorRole; label: string }[] = [
-  { role: "primary", label: "Primary" },
-  { role: "secondary", label: "Secondary" },
-  { role: "tertiary", label: "Tertiary" },
-  { role: "brand", label: "Brand" },
+  { role: "primary", label: "Primary color" },
+  { role: "secondary", label: "Secondary color" },
+  { role: "tertiary", label: "Tertiary color" },
+  { role: "brand", label: "Brand color" },
 ];
 
-function loadSelection(): MixerSelection {
-  if (typeof window === "undefined") return {};
+function load<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
   try {
-    return JSON.parse(localStorage.getItem(MIXER_STORAGE_KEY) ?? "{}");
+    const raw = localStorage.getItem(key);
+    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
   } catch {
-    return {};
+    return fallback;
   }
 }
 
+function loadPresets(): Preset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    return JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+
+function HueRow({
+  label,
+  hue,
+  preview,
+  onChange,
+}: {
+  label: string;
+  hue: number;
+  preview: string;
+  onChange: (hue: number) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium">{label}</span>
+        <div
+          className="h-5 w-9 rounded-md border"
+          style={{ background: preview }}
+        />
+      </div>
+      <Slider
+        value={[hue]}
+        onValueChange={([value]) => onChange(value)}
+        min={0}
+        max={360}
+        step={1}
+        aria-label={`${label} hue`}
+      />
+      <p className="text-xs text-muted-foreground">
+        Hue: <span className="font-mono tabular-nums">{hue}</span>
+      </p>
+    </div>
+  );
+}
+
 export function ThemeMixer() {
-  const [selection, setSelection] = useState<MixerSelection>(loadSelection);
+  const [hues, setHues] = useState<MixerHues>(() =>
+    load(MIXER_STORAGE_KEY, DEFAULT_HUES),
+  );
+  const [presets, setPresets] = useState<Preset[]>(loadPresets);
+  const [presetName, setPresetName] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(MIXER_STORAGE_KEY, JSON.stringify(selection));
+    localStorage.setItem(MIXER_STORAGE_KEY, JSON.stringify(hues));
 
     const style = document.documentElement.style;
-    const applied: string[] = [];
-
-    for (const { role } of ROLES) {
-      const swatch = ROLE_SWATCHES[role].find(
-        (s) => s.name === selection[role],
-      );
-      if (!swatch) continue;
-      const vars = ROLE_CSS_VARS[role];
-      for (const bg of vars.bg) {
-        style.setProperty(bg, `light-dark(${swatch.light}, ${swatch.dark})`);
-        applied.push(bg);
-      }
-      for (const fg of vars.fg) {
-        style.setProperty(
-          fg,
-          `light-dark(${swatch.lightForeground}, ${swatch.darkForeground})`,
-        );
-        applied.push(fg);
-      }
+    const vars = buildCssVars(hues);
+    for (const [name, value] of Object.entries(vars)) {
+      style.setProperty(name, value);
     }
-
-    const grayScale = GRAY_SCALES.find((g) => g.name === selection.gray);
-    if (grayScale) {
-      style.setProperty(
-        "--foreground",
-        `light-dark(${grayScale.foreground.light}, ${grayScale.foreground.dark})`,
-      );
-      style.setProperty(
-        "--muted-foreground",
-        `light-dark(${grayScale.mutedForeground.light}, ${grayScale.mutedForeground.dark})`,
-      );
-      applied.push("--foreground", "--muted-foreground");
-    }
-
     return () => {
-      for (const name of applied) style.removeProperty(name);
+      for (const name of Object.keys(vars)) style.removeProperty(name);
     };
-  }, [selection]);
+  }, [hues]);
 
-  const toggle = (key: keyof MixerSelection, name: string) =>
-    setSelection((prev) => ({
-      ...prev,
-      [key]: prev[key] === name ? undefined : name,
-    }));
+  useEffect(() => {
+    localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
+  }, [presets]);
 
-  const hasSelection = Object.values(selection).some(Boolean);
+  const setHue = (key: keyof MixerHues, value: number) =>
+    setHues((prev) => ({ ...prev, [key]: value }));
+
+  const savePreset = () => {
+    const name = presetName.trim();
+    if (!name) return;
+    setPresets((prev) => [
+      ...prev.filter((p) => p.name !== name),
+      { name, hues },
+    ]);
+    setPresetName("");
+  };
+
+  const isActive = (preset: Preset) =>
+    JSON.stringify(preset.hues) === JSON.stringify(hues);
 
   return (
     <Popover>
@@ -97,70 +134,111 @@ export function ThemeMixer() {
           <PaletteIcon className="size-4.5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-72 space-y-3">
+      <PopoverContent align="end" className="w-80 space-y-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Theme mixer</p>
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs"
-            disabled={!hasSelection}
-            onClick={() => setSelection({})}
+            onClick={() => setHues(DEFAULT_HUES)}
           >
             Reset
           </Button>
         </div>
 
-        {ROLES.map(({ role, label }) => (
-          <div key={role} className="flex items-center justify-between gap-3">
-            <span className="text-xs text-muted-foreground">{label}</span>
-            <div className="flex gap-1.5">
-              {ROLE_SWATCHES[role].map((swatch) => (
-                <button
-                  key={swatch.name}
-                  type="button"
-                  title={`${label}: ${swatch.name}`}
-                  aria-label={`${label}: ${swatch.name}`}
-                  aria-pressed={selection[role] === swatch.name}
-                  onClick={() => toggle(role, swatch.name)}
-                  className={cn(
-                    "size-5.5 rounded-full border transition-transform hover:scale-110",
-                    selection[role] === swatch.name &&
-                      "ring-2 ring-ring ring-offset-2 ring-offset-popover",
-                  )}
+        <div className="space-y-1.5">
+          <span className="text-xs text-muted-foreground">Presets</span>
+          <div className="flex flex-wrap gap-1.5">
+            {BUILT_IN_PRESETS.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => setHues(preset.hues)}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted",
+                  isActive(preset) && "border-ring",
+                )}
+              >
+                <span
+                  className="size-3 rounded-full"
                   style={{
-                    background: `light-dark(${swatch.light}, ${swatch.dark})`,
+                    background: rolePreview("primary", preset.hues.primary),
                   }}
                 />
-              ))}
-            </div>
+                {preset.name}
+              </button>
+            ))}
+            {presets.map((preset) => (
+              <button
+                key={preset.name}
+                type="button"
+                onClick={() => setHues(preset.hues)}
+                className={cn(
+                  "group flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted",
+                  isActive(preset) && "border-ring",
+                )}
+              >
+                <span
+                  className="size-3 rounded-full"
+                  style={{
+                    background: rolePreview("primary", preset.hues.primary),
+                  }}
+                />
+                {preset.name}
+                <XIcon
+                  role="button"
+                  aria-label={`Delete preset ${preset.name}`}
+                  className="size-3 text-muted-foreground opacity-50 group-hover:opacity-100"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setPresets((prev) =>
+                      prev.filter((p) => p.name !== preset.name),
+                    );
+                  }}
+                />
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
 
         <Separator />
 
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-muted-foreground">Text</span>
-          <div className="flex gap-1.5">
-            {GRAY_SCALES.map((scale) => (
-              <button
-                key={scale.name}
-                type="button"
-                title={`Text: ${scale.name}`}
-                aria-label={`Text: ${scale.name}`}
-                aria-pressed={selection.gray === scale.name}
-                onClick={() => toggle("gray", scale.name)}
-                className={cn(
-                  "size-5.5 rounded-full border transition-transform hover:scale-110",
-                  selection.gray === scale.name &&
-                    "ring-2 ring-ring ring-offset-2 ring-offset-popover",
-                )}
-                style={{
-                  background: `light-dark(${scale.mutedForeground.light}, ${scale.mutedForeground.dark})`,
-                }}
-              />
-            ))}
-          </div>
+        {ROLES.map(({ role, label }) => (
+          <HueRow
+            key={role}
+            label={label}
+            hue={hues[role]}
+            preview={rolePreview(role, hues[role])}
+            onChange={(value) => setHue(role, value)}
+          />
+        ))}
+
+        <HueRow
+          label="Text gray"
+          hue={hues.gray}
+          preview={grayPreview(hues.gray)}
+          onChange={(value) => setHue("gray", value)}
+        />
+
+        <Separator />
+
+        <div className="flex gap-2">
+          <Input
+            value={presetName}
+            onChange={(event) => setPresetName(event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && savePreset()}
+            placeholder="Preset name"
+            className="h-8 text-xs"
+          />
+          <Button
+            size="sm"
+            className="h-8"
+            disabled={!presetName.trim()}
+            onClick={savePreset}
+          >
+            Save
+          </Button>
         </div>
       </PopoverContent>
     </Popover>
