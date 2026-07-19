@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 import { Header } from "@/components/header";
+import { ThemeInitScript } from "@/components/theme-init-script";
 import { ThemeProvider } from "@/components/theme-provider";
 import { fontVariableClasses } from "@/lib/fonts";
 
@@ -26,6 +27,7 @@ export default function RootLayout({
       className={`${fontVariableClasses} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <ThemeInitScript />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

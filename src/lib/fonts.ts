@@ -58,6 +58,8 @@ export const FONT_OPTIONS: FontOption[] = FONT_GROUPS.flatMap(
 
 export const DEFAULT_FONT = "Geist";
 export const FONT_STORAGE_KEY = "app-font-sans";
+// Resolved var() value for the pre-paint init script.
+export const FONT_VAR_STORAGE_KEY = "app-font-sans-var";
 
 export const fontVariableClasses = [
   geist,

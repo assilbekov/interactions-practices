@@ -52,9 +52,9 @@ export function DemoCard({ variant, latency, runId }: DemoCardProps) {
         {variant === "skeleton" &&
           (loading ? (
             <div className="space-y-2">
-              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-5 w-24" />
               <Skeleton className="h-8 w-36" />
-              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-5.5 w-28" />
             </div>
           ) : (
             <LoadedContent />
@@ -79,17 +79,16 @@ export function DemoCard({ variant, latency, runId }: DemoCardProps) {
             >
               $12,480.00
             </motion.p>
-            {loading ? (
-              <Skeleton className="h-5.5 w-28" />
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+            <Badge variant="secondary">
+              <motion.span
+                animate={{ filter: loading ? "blur(4px)" : "blur(0px)" }}
                 transition={{ duration: 0.25 }}
+                className="select-none"
               >
-                <Badge variant="secondary">+4.2% this week</Badge>
-              </motion.div>
-            )}
+                +4.2%
+              </motion.span>
+              this week
+            </Badge>
           </div>
         )}
       </CardContent>

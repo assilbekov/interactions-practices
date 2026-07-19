@@ -7,6 +7,13 @@ export type Pattern = {
 
 export const patterns: Pattern[] = [
   {
+    slug: "theme-preview",
+    title: "Theme preview",
+    description:
+      "A working mock dashboard that exercises every theme token — mix colors and fonts live.",
+    status: "live",
+  },
+  {
     slug: "loading-states",
     title: "Loading states",
     description:

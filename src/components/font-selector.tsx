@@ -17,6 +17,7 @@ import {
   FONT_GROUPS,
   FONT_OPTIONS,
   FONT_STORAGE_KEY,
+  FONT_VAR_STORAGE_KEY,
 } from "@/lib/fonts";
 
 function loadFont(): string {
@@ -33,11 +34,14 @@ export function FontSelector() {
     const option = FONT_OPTIONS.find((o) => o.name === font);
     const style = document.documentElement.style;
     if (option && option.name !== DEFAULT_FONT) {
-      style.setProperty("--app-font-sans", `var(${option.cssVar})`);
+      const value = `var(${option.cssVar})`;
+      localStorage.setItem(FONT_VAR_STORAGE_KEY, value);
+      style.setProperty("--app-font-sans", value);
       return () => {
         style.removeProperty("--app-font-sans");
       };
     }
+    localStorage.removeItem(FONT_VAR_STORAGE_KEY);
   }, [font]);
 
   return (

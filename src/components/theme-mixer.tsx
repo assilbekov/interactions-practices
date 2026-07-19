@@ -17,6 +17,7 @@ import {
   DEFAULT_HUES,
   MIXER_STORAGE_KEY,
   PRESETS_STORAGE_KEY,
+  VARS_STORAGE_KEY,
   buildCssVars,
   grayPreview,
   rolePreview,
@@ -99,6 +100,7 @@ export function ThemeMixer() {
 
     const style = document.documentElement.style;
     const vars = buildCssVars(hues);
+    localStorage.setItem(VARS_STORAGE_KEY, JSON.stringify(vars));
     for (const [name, value] of Object.entries(vars)) {
       style.setProperty(name, value);
     }

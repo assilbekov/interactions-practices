@@ -123,3 +123,6 @@ export const BUILT_IN_PRESETS: Preset[] = [
 
 export const MIXER_STORAGE_KEY = "theme-mixer-hues";
 export const PRESETS_STORAGE_KEY = "theme-mixer-presets";
+// Final computed vars, persisted so the pre-paint init script can apply them
+// without re-deriving (see ThemeInitScript in layout).
+export const VARS_STORAGE_KEY = "theme-mixer-vars";

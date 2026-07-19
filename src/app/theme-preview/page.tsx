@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ComponentBlocks } from "./_components/component-blocks";
 import { PreviewDashboard } from "./_components/preview-dashboard";
 
 export const metadata: Metadata = {
@@ -21,6 +22,8 @@ export default function ThemePreviewPage() {
       </section>
 
       <PreviewDashboard />
+
+      <ComponentBlocks />
     </div>
   );
 }
