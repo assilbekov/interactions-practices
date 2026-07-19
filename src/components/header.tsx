@@ -9,13 +9,21 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <Link
-          href="/"
-          className="flex items-center gap-2 font-semibold tracking-tight"
-        >
-          <SparklesIcon className="size-4.5" />
-          Interactions Practices
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-semibold tracking-tight"
+          >
+            <SparklesIcon className="size-4.5" />
+            Interactions Practices
+          </Link>
+          <Link
+            href="/theme-preview"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Theme preview
+          </Link>
+        </div>
         <div className="flex items-center gap-1">
           <FontSelector />
           <ThemeMixer />
