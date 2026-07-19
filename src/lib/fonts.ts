@@ -8,26 +8,45 @@ import {
   Source_Code_Pro,
 } from "next/font/google";
 
-const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
+// display: "block" waits for the real font instead of painting a fallback
+// and reflowing — with cached fonts the wait is imperceptible, and it's what
+// prevents the spacing flicker on refresh when a non-default font is active.
+const geist = Geist({
+  variable: "--font-geist",
+  subsets: ["latin"],
+  display: "block",
+});
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "block",
+});
 const ibmPlexSans = IBM_Plex_Sans({
   variable: "--font-ibm-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "block",
 });
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+  display: "block",
 });
-const firaCode = Fira_Code({ variable: "--font-fira-code", subsets: ["latin"] });
+const firaCode = Fira_Code({
+  variable: "--font-fira-code",
+  subsets: ["latin"],
+  display: "block",
+});
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "block",
 });
 const sourceCodePro = Source_Code_Pro({
   variable: "--font-source-code-pro",
   subsets: ["latin"],
+  display: "block",
 });
 
 export type FontOption = { name: string; cssVar: string };
