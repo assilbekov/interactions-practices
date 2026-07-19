@@ -48,4 +48,74 @@ export const patterns: Pattern[] = [
       "Four submit buttons, one slow API — the request counter exposes which ones invite double-submits.",
     status: "live",
   },
+  {
+    slug: "skeleton-transitions",
+    title: "Skeleton → content handoff",
+    description:
+      "The moment content replaces its skeleton: hard swap, fade-through, or blur-up — which one hides the seam?",
+    status: "soon",
+  },
+  {
+    slug: "form-validation-timing",
+    title: "Form validation timing",
+    description:
+      "As-you-type, on-blur, or on-submit — when should a form call you wrong? Punish early and users feel scolded.",
+    status: "soon",
+  },
+  {
+    slug: "undo-vs-confirm",
+    title: "Undo vs. confirm",
+    description:
+      "Delete instantly with an undo toast, or block with an 'Are you sure?' dialog — trust versus friction.",
+    status: "soon",
+  },
+  {
+    slug: "empty-states",
+    title: "Empty states",
+    description:
+      "Blank void, helpful guidance, or pre-filled demo data — what a new user sees before there's anything to see.",
+    status: "soon",
+  },
+  {
+    slug: "search-feedback",
+    title: "Search feedback",
+    description:
+      "Debounced spinner, instant stale-while-loading results, or search-on-enter — keeping fast typists oriented.",
+    status: "soon",
+  },
+  {
+    slug: "drag-reorder",
+    title: "Drag to reorder",
+    description:
+      "Drop indicators, ghost previews, and spring-settle physics — what makes dragging feel grabbable.",
+    status: "soon",
+  },
+  {
+    slug: "infinite-scroll-vs-pagination",
+    title: "Infinite scroll vs. pagination",
+    description:
+      "Feeds want flow, tables want landmarks — plus the footer that infinite scroll makes unreachable.",
+    status: "soon",
+  },
+  {
+    slug: "error-recovery",
+    title: "Error recovery",
+    description:
+      "Full-page error, inline retry, or auto-retry with backoff — failing without losing the user's work or trust.",
+    status: "soon",
+  },
+  {
+    slug: "progress-indication",
+    title: "Progress indication",
+    description:
+      "Determinate bar, indeterminate shimmer, or step list — matching the indicator to what you actually know.",
+    status: "soon",
+  },
+  {
+    slug: "success-moments",
+    title: "Success moments",
+    description:
+      "Checkmark, subtle toast, or confetti — how much celebration an action deserves before it gets annoying.",
+    status: "soon",
+  },
 ];
