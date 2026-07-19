@@ -32,6 +32,9 @@ function Slider({
       max={max}
       className={cn(
         "relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col",
+        // widen the click target beyond the visual track, like the thumb's
+        // after:-inset-2 — padding grows the hitbox, negative margin keeps layout
+        "py-2 -my-2 data-vertical:px-2 data-vertical:-mx-2 data-vertical:py-0 data-vertical:my-0",
         className
       )}
       {...props}
