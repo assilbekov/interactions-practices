@@ -14,6 +14,13 @@ export const patterns: Pattern[] = [
     status: "live",
   },
   {
+    slug: "product-feel",
+    title: "Product feel",
+    description:
+      "How radius, control size, and motion pace change what a product feels like — trading vs. checkout vs. editor.",
+    status: "live",
+  },
+  {
     slug: "loading-states",
     title: "Loading states",
     description:

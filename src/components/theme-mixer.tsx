@@ -14,16 +14,19 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import {
   BUILT_IN_PRESETS,
-  DEFAULT_HUES,
+  CONTROL_SIZES,
+  DEFAULT_SETTINGS,
+  MIXER_APPLY_EVENT,
   MIXER_STORAGE_KEY,
   PRESETS_STORAGE_KEY,
   VARS_STORAGE_KEY,
   buildCssVars,
+  buildShapeVars,
   grayPreview,
   rolePreview,
   type ColorRole,
   type MixerHues,
-  type Preset,
+  type MixerSettings,
 } from "@/lib/theme-mixer";
 import { cn } from "@/lib/utils";
 
@@ -34,20 +37,44 @@ const ROLES: { role: ColorRole; label: string }[] = [
   { role: "brand", label: "Brand color" },
 ];
 
-function load<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
+type SavedPreset = { name: string; settings: MixerSettings };
+
+function loadSettings(): MixerSettings {
+  if (typeof window === "undefined") return DEFAULT_SETTINGS;
   try {
-    const raw = localStorage.getItem(key);
-    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
+    const raw = JSON.parse(localStorage.getItem(MIXER_STORAGE_KEY) ?? "null");
+    if (!raw) return DEFAULT_SETTINGS;
+    // Migrate the old hues-only shape ({ primary: 293, ... }).
+    if (typeof raw.primary === "number") {
+      return { ...DEFAULT_SETTINGS, hues: { ...DEFAULT_SETTINGS.hues, ...raw } };
+    }
+    return {
+      ...DEFAULT_SETTINGS,
+      ...raw,
+      hues: { ...DEFAULT_SETTINGS.hues, ...raw.hues },
+    };
   } catch {
-    return fallback;
+    return DEFAULT_SETTINGS;
   }
 }
 
-function loadPresets(): Preset[] {
+function loadPresets(): SavedPreset[] {
   if (typeof window === "undefined") return [];
   try {
-    return JSON.parse(localStorage.getItem(PRESETS_STORAGE_KEY) ?? "[]");
+    const raw: unknown[] = JSON.parse(
+      localStorage.getItem(PRESETS_STORAGE_KEY) ?? "[]",
+    );
+    return raw.map((p) => {
+      const preset = p as { name: string; hues?: MixerHues; settings?: MixerSettings };
+      // Migrate old hues-only presets.
+      if (preset.hues) {
+        return {
+          name: preset.name,
+          settings: { ...DEFAULT_SETTINGS, hues: preset.hues },
+        };
+      }
+      return preset as SavedPreset;
+    });
   } catch {
     return [];
   }
@@ -89,17 +116,18 @@ function HueRow({
 }
 
 export function ThemeMixer() {
-  const [hues, setHues] = useState<MixerHues>(() =>
-    load(MIXER_STORAGE_KEY, DEFAULT_HUES),
-  );
-  const [presets, setPresets] = useState<Preset[]>(loadPresets);
+  const [settings, setSettings] = useState<MixerSettings>(loadSettings);
+  const [presets, setPresets] = useState<SavedPreset[]>(loadPresets);
   const [presetName, setPresetName] = useState("");
 
   useEffect(() => {
-    localStorage.setItem(MIXER_STORAGE_KEY, JSON.stringify(hues));
+    localStorage.setItem(MIXER_STORAGE_KEY, JSON.stringify(settings));
 
     const style = document.documentElement.style;
-    const vars = buildCssVars(hues);
+    const vars = {
+      ...buildCssVars(settings.hues),
+      ...buildShapeVars(settings),
+    };
     localStorage.setItem(VARS_STORAGE_KEY, JSON.stringify(vars));
     for (const [name, value] of Object.entries(vars)) {
       style.setProperty(name, value);
@@ -107,27 +135,43 @@ export function ThemeMixer() {
     return () => {
       for (const name of Object.keys(vars)) style.removeProperty(name);
     };
-  }, [hues]);
+  }, [settings]);
 
   useEffect(() => {
     localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets));
   }, [presets]);
 
+  useEffect(() => {
+    const onApply = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<MixerSettings>>).detail;
+      if (!detail) return;
+      setSettings((prev) => ({
+        ...prev,
+        ...detail,
+        hues: { ...prev.hues, ...(detail.hues ?? {}) },
+      }));
+    };
+    window.addEventListener(MIXER_APPLY_EVENT, onApply);
+    return () => window.removeEventListener(MIXER_APPLY_EVENT, onApply);
+  }, []);
+
   const setHue = (key: keyof MixerHues, value: number) =>
-    setHues((prev) => ({ ...prev, [key]: value }));
+    setSettings((prev) => ({
+      ...prev,
+      hues: { ...prev.hues, [key]: value },
+    }));
 
   const savePreset = () => {
     const name = presetName.trim();
     if (!name) return;
     setPresets((prev) => [
       ...prev.filter((p) => p.name !== name),
-      { name, hues },
+      { name, settings },
     ]);
     setPresetName("");
   };
 
-  const isActive = (preset: Preset) =>
-    JSON.stringify(preset.hues) === JSON.stringify(hues);
+  const radiusPx = Math.round(settings.radius * 16);
 
   return (
     <Popover>
@@ -136,14 +180,17 @@ export function ThemeMixer() {
           <PaletteIcon className="size-4.5" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 space-y-4">
+      <PopoverContent
+        align="end"
+        className="max-h-[80vh] w-80 space-y-4 overflow-y-auto"
+      >
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Theme mixer</p>
           <Button
             variant="ghost"
             size="sm"
             className="h-7 px-2 text-xs"
-            onClick={() => setHues(DEFAULT_HUES)}
+            onClick={() => setSettings(DEFAULT_SETTINGS)}
           >
             Reset
           </Button>
@@ -156,10 +203,13 @@ export function ThemeMixer() {
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => setHues(preset.hues)}
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, hues: preset.hues }))
+                }
                 className={cn(
                   "flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted",
-                  isActive(preset) && "border-ring",
+                  JSON.stringify(preset.hues) ===
+                    JSON.stringify(settings.hues) && "border-ring",
                 )}
               >
                 <span
@@ -175,16 +225,20 @@ export function ThemeMixer() {
               <button
                 key={preset.name}
                 type="button"
-                onClick={() => setHues(preset.hues)}
+                onClick={() => setSettings(preset.settings)}
                 className={cn(
                   "group flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs transition-colors hover:bg-muted",
-                  isActive(preset) && "border-ring",
+                  JSON.stringify(preset.settings) ===
+                    JSON.stringify(settings) && "border-ring",
                 )}
               >
                 <span
                   className="size-3 rounded-full"
                   style={{
-                    background: rolePreview("primary", preset.hues.primary),
+                    background: rolePreview(
+                      "primary",
+                      preset.settings.hues.primary,
+                    ),
                   }}
                 />
                 {preset.name}
@@ -210,18 +264,64 @@ export function ThemeMixer() {
           <HueRow
             key={role}
             label={label}
-            hue={hues[role]}
-            preview={rolePreview(role, hues[role])}
+            hue={settings.hues[role]}
+            preview={rolePreview(role, settings.hues[role])}
             onChange={(value) => setHue(role, value)}
           />
         ))}
 
         <HueRow
           label="Text gray"
-          hue={hues.gray}
-          preview={grayPreview(hues.gray)}
+          hue={settings.hues.gray}
+          preview={grayPreview(settings.hues.gray)}
           onChange={(value) => setHue("gray", value)}
         />
+
+        <Separator />
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium">Radius</span>
+            <div
+              className="size-5 border-t-2 border-l-2 border-foreground/60"
+              style={{ borderTopLeftRadius: `${radiusPx}px` }}
+            />
+          </div>
+          <Slider
+            value={[radiusPx]}
+            onValueChange={([value]) =>
+              setSettings((prev) => ({ ...prev, radius: value / 16 }))
+            }
+            min={0}
+            max={24}
+            step={2}
+            aria-label="Corner radius"
+          />
+          <p className="text-xs text-muted-foreground">
+            Radius: <span className="font-mono tabular-nums">{radiusPx}px</span>
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <span className="text-xs font-medium">Control height</span>
+          <div className="flex gap-1.5">
+            {CONTROL_SIZES.map((size) => (
+              <button
+                key={size.label}
+                type="button"
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, control: size.rem }))
+                }
+                className={cn(
+                  "flex-1 rounded-md border px-2 py-1.5 font-mono text-xs tabular-nums transition-colors hover:bg-muted",
+                  settings.control === size.rem && "border-ring bg-muted",
+                )}
+              >
+                {size.label}px
+              </button>
+            ))}
+          </div>
+        </div>
 
         <Separator />
 

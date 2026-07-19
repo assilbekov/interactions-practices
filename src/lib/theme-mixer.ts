@@ -103,6 +103,33 @@ export function buildCssVars(hues: MixerHues): Record<string, string> {
   };
 }
 
+// Shape settings: corner radius (rem) and control height (rem) — different
+// products need different curves and densities.
+export type MixerSettings = {
+  hues: MixerHues;
+  radius: number;
+  control: number;
+};
+
+export const DEFAULT_SETTINGS: MixerSettings = {
+  hues: DEFAULT_HUES,
+  radius: 0.625,
+  control: 2.5,
+};
+
+export const CONTROL_SIZES = [
+  { label: "36", rem: 2.25 },
+  { label: "40", rem: 2.5 },
+  { label: "48", rem: 3 },
+];
+
+export function buildShapeVars(settings: MixerSettings): Record<string, string> {
+  return {
+    "--radius": `${settings.radius}rem`,
+    "--control-h": `${settings.control}rem`,
+  };
+}
+
 export type Preset = { name: string; hues: MixerHues };
 
 export const BUILT_IN_PRESETS: Preset[] = [
@@ -119,7 +146,35 @@ export const BUILT_IN_PRESETS: Preset[] = [
     name: "Sunset",
     hues: { primary: 16, secondary: 76, tertiary: 16, brand: 16, gray: 76 },
   },
+  {
+    name: "Grape",
+    hues: { primary: 310, secondary: 310, tertiary: 259, brand: 310, gray: 290 },
+  },
+  {
+    name: "Mint",
+    hues: { primary: 170, secondary: 190, tertiary: 140, brand: 170, gray: 200 },
+  },
+  {
+    name: "Ember",
+    hues: { primary: 30, secondary: 40, tertiary: 60, brand: 30, gray: 40 },
+  },
+  {
+    name: "Sky",
+    hues: { primary: 240, secondary: 230, tertiary: 200, brand: 240, gray: 240 },
+  },
+  {
+    name: "Magenta",
+    hues: { primary: 340, secondary: 340, tertiary: 300, brand: 340, gray: 320 },
+  },
+  {
+    name: "Lime",
+    hues: { primary: 125, secondary: 110, tertiary: 90, brand: 125, gray: 130 },
+  },
 ];
+
+// Cross-component channel: pages (e.g. Product feel) dispatch this event with
+// a Partial<MixerSettings> detail; the mounted ThemeMixer merges and applies.
+export const MIXER_APPLY_EVENT = "theme-mixer:apply";
 
 export const MIXER_STORAGE_KEY = "theme-mixer-hues";
 export const PRESETS_STORAGE_KEY = "theme-mixer-presets";
